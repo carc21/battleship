@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to the game of #{title}
+  div.ships(style="width:"+(size * 20)+"px;height:"+(size * 20)+"px;")
+  div.controls
+    a.button#reset Reset
+    input.input#x(type="number" placeholder="X")
+    input.input#y(type="number" placeholder="Y")
+    a.button#dropBomb Drop Bomb
+  div.settings
+    input.input#name(type="text")
+    a.button#nameButton Set Name

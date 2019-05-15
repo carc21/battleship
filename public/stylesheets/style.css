@@ -1,0 +1,75 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+pre {
+  white-space: pre;
+}
+
+a {
+  color: #00b7ff;
+}
+
+.ships {
+  margin: 40px auto;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  background: -webkit-linear-gradient(0deg, transparent 95%, white 100%),
+    -webkit-linear-gradient(90deg, transparent 95%, white 100%);
+  background-color: #3883ad;
+  background-size: 20px 20px, 20px 20px;
+}
+
+.controls,
+.settings {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.ship {
+  position: absolute;
+  background: #cfaf21;
+  border-radius: 10px;
+  box-shadow: 0px 1px 1px 2px rgba(0, 0, 0, 0.5);
+  margin-left: -20px;
+  margin-top: -20px;
+}
+
+.ship-name {
+  margin: 0;
+  font-size: 8px;
+  color: white;
+  white-space: nowrap;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  /* text-shadow: 0px 2px 2px rgba(0,0,0,1); */
+}
+
+.controls .input,
+.settings .input {
+  border: 2px solid #0a3d62;
+  border-radius: 4px;
+  background-color: #b6daf8;
+  color: black;
+  padding: 5px 12px;
+  margin: 0 12px;
+  max-width: 40px;
+}
+
+.controls .button,
+.settings .button {
+  border: 2px solid #0a3d62;
+  border-radius: 4px;
+  background-color: #3c6382;
+  color: white;
+  padding: 5px 12px;
+  cursor: pointer;
+  margin: 0 12px;
+}
