@@ -17,21 +17,23 @@ router.post("/reset", function(req, res, next) {
   res.send("ok");
 });
 
-let sockets = {};
-
 module.exports = io => {
+  let sockets = {};
+
   io.on("connection", socket => {
     // console.log(battleship.getPlayers().map(player => player.getName()));
 
     // battleship.printMap();
 
+    socket.emit("here is the size", battleship.size);
+
     socket.on("playername", name => {
       let id = socket.id;
       if (!battleship.hasPlayerWithName(name)) {
-        battleship.addPlayer(id, name);
+        battleship.addPlayer(id);
         battleship.getPlayer(id).setName(name);
         battleship.getPlayer(id).createShips(battleship, 5);
-        socket.emit("playerNamed", id);
+        socket.emit("playernamed", id);
         sockets[id] = socket;
       } else {
         socket.emit("player with same name");
@@ -39,24 +41,29 @@ module.exports = io => {
     });
 
     socket.on("get my player", function(id) {
-      // console.log(battleship.players);
       if (battleship.getPlayer(id)) {
         socket.emit("here is your player", battleship.getPlayer(id));
-        battleship.printMap();
+        // battleship.printMap();
       }
     });
 
     socket.on("dropbomb", params => {
-      let resp = battleship.dropBomb(
-        params.id,
-        parseInt(params.x),
-        parseInt(params.y)
-      );
-      socket.emit("hit", resp);
-      socket.broadcast.emit("shiphit", {
-        by: battleship.getPlayer(params.id).getName(),
-        success: true
-      });
+      if (battleship.getPlayer(params.id)) {
+        let x = parseInt(params.coords.x);
+        let y = parseInt(params.coords.y);
+        let resp = battleship.dropBomb(params.id, {
+          x: x,
+          y: y
+        });
+        socket.emit("hit", resp);
+        resp.forEach(bombData => {
+          socket.broadcast.emit("shiphit", {
+            by: battleship.getPlayer(params.id).getName(),
+            data: bombData,
+            bombcoords: { x: x, y: y }
+          });
+        });
+      }
     });
   });
   return router;

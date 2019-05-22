@@ -1,63 +1,133 @@
-var socket = io();
-
-var mapSize = 0;
-var ships = [];
-
 // elements
 let gameBoard = document.querySelector(".ships");
-let button = document.getElementById("dropBomb");
-let resetButton = document.getElementById("reset");
-let nameButton = document.getElementById("nameButton");
-let nameTxt = document.getElementById("name");
+let dropBtn = document.getElementById("dropBomb");
+let resetBtn = document.getElementById("reset");
+let nameInp = document.getElementById("name");
+let nameBtn = document.getElementById("nameButton");
+let log = document.getElementById("log");
 
-// events
-socket.on("hit", hit => {
-  if (!hit.gotHit) {
-    alert(`Shot failed`);
-  } else {
-    gameBoard.innerHTML += `<span style="position:absolute;left:${hit.x *
-      20}px;top:${hit.y * 20}px">💥</span>`;
-    alert(`${hit.shipName} was hit!`);
-  }
+let socket = io();
+let game = {};
+let mapSize = 0;
+let scale = 20;
+let ships = [];
+let gameLog = [];
+// -------------
+// events - Game
+// -------------
+// event for recieving the board size
+socket.on("here is the size", function(size) {
+  mapSize = size;
 });
 
-socket.on("playerNamed", id => {
-  localStorage.setItem("socket.id", id);
-});
-
+// event to get player and ship details
 socket.on("here is your player", player => {
+  game.log(`Welcome ${player.name}`);
+
+  nameInp.value = player.name;
+  nameInp.disabled = true;
+
   player.ships.forEach(ship => {
-    gameBoard.innerHTML += `<span class="ship" style="top:${ship.coords.x *
-      20}px;left:${ship.coords.y * 20}px;width:${ship.size.w *
-      20}px;height:${ship.size.h * 20}px;"><h5>${ship.name}</h5></span>`;
+    gameBoard.innerHTML += `<span class="ship" id="ship-${
+      ship.id
+    }" style="left:${(ship.coords.x - 1) * scale}px;top:${(ship.coords.y - 1) *
+      scale}px;width:${ship.size.w * scale}px;height:${ship.size.h *
+      scale}px;"><h5>${ship.name}</h5></span>`;
   });
+  ships = player.ships;
+  nameInp.disabled = "disabled";
+  game.playernamed = true;
+});
+game.log = x => {
+  gameLog.push(x);
+  if (gameLog.length > 5) {
+    gameLog = gameLog.slice(gameLog.length - 5);
+  }
+  log.innerHTML = "<ul>";
+  for (let i = gameLog.length - 1; i >= 0; i--) {
+    log.innerHTML += `<li>${gameLog[i]}</li>`;
+  }
+  log.innerHTML += "</ul>";
+};
+
+// -------------
+// events - Name
+// -------------
+// set name button action
+nameBtn.addEventListener("click", () => {
+  if (game.playernamed) {
+    return;
+  }
+  let name = nameInp.value || "";
+  socket.emit("playername", name);
 });
 
-nameButton.addEventListener("click", () => {
-  socket.emit("playername", nameTxt.value);
-  localStorage.setItem("socket.id", nameTxt.value);
+// get name from localStorage
+if (localStorage.getItem("socket.id")) {
+  socket.emit("get my player", localStorage.getItem("socket.id"));
+}
+
+// event when name is assigned successfully
+socket.on("playernamed", id => {
+  localStorage.setItem("socket.id", id);
+  socket.emit("get my player", id);
 });
 
-button.addEventListener("click", () => {
+// event when name is taken
+socket.on("player with same name", () => {
+  game.log(`Name taken, choose a different one.`);
+});
+
+// -------------
+// events - Ships
+// -------------
+// drop bomb action
+dropBtn.addEventListener("click", () => {
   let x = document.getElementById("x").value | 0;
   let y = document.getElementById("y").value | 0;
-  if (localStorage.getItem("socket.id")) {
+  if (localStorage.getItem("socket.id") && game.playernamed) {
     socket.emit("dropbomb", {
       id: localStorage.getItem("socket.id"),
       coords: { x: x, y: y }
     });
   } else {
-    console.log(`You need to enter a name first.`);
+    game.log(`You need to enter a name first.`);
   }
 });
 
-if (localStorage.getItem("socket.id")) {
-  nameTxt.value = localStorage.getItem("socket.id");
-  socket.emit("playername", nameTxt.value);
-  socket.emit("get my player", id);
-}
+// event if a ship got hit by you
+socket.on("hit", hit => {
+  console.log(hit);
 
-resetButton.addEventListener("click", () => {
+  if (hit.length < 1) {
+    game.log(`Shot failed`);
+  } else {
+    game.log(`Successful shot`);
+  }
+});
+
+// when a ship got hit
+socket.on("shiphit", hit => {
+  // find my ship if it got hit
+  let ship = ships.find(myShip => myShip.id === hit.data.id);
+  if (ship) {
+    // log result
+    game.log(`${ship.name} was hit by ${hit.by}`);
+    // print an empji
+    gameBoard.innerHTML += `<span style="position:absolute;left:${(hit
+      .bombcoords.x -
+      1) *
+      scale}px;top:${(hit.bombcoords.y - 1) * scale}px">💥</span>`;
+    // check if there is no health remaining
+    if (hit.data.hp.every(val => val === "0")) {
+      game.log(`${ship.name} was defeated`);
+      document.getElementById("ship-" + hit.data.id).style.backgroundColor =
+        "black";
+    }
+  }
+});
+
+resetBtn.addEventListener("click", () => {
   let xhr = new XMLHttpRequest();
   xhr.open("POST", `/reset`);
   xhr.onload = () => {

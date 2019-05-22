@@ -9,12 +9,6 @@ function range(min, max) {
   return Math.floor(Math.random() * max) + min;
 }
 
-function clearConsole() {
-  for (var i = 0; i < process.stdout.getWindowSize()[1]; i++) {
-    console.log("\r\n");
-  }
-}
-
 function getRangeField(max, offset) {
   const field = [];
   const maxW = max - (offset.w - 1);
@@ -35,8 +29,8 @@ function getRangeField(max, offset) {
 }
 
 class Game {
-  constructor() {
-    this.size = GAME_SIZE;
+  constructor(size) {
+    this.size = size ? size : GAME_SIZE;
     this.players = [];
   }
 
@@ -65,28 +59,22 @@ class Game {
     return this.getPlayerByName(playerName);
   }
 
-  dropBomb(playerLaunchingId, x, y) {
+  dropBomb(playerLaunchingId, coords) {
     let hit = [];
     this.players
       .filter(player => player.id !== playerLaunchingId)
       .forEach(player => {
         player.ships.forEach(ship => {
-          let response = ship.wasHit(x, y);
+          let response = ship.wasHit(coords.x, coords.y);
           if (response) {
-            hit = { shipName: response.name, gotHit: true, x: x, y: y };
-            return;
+            hit.push(response);
           }
         });
       });
-    if (!hit) {
-      return { gotHit: false };
-    } else {
-      return hit;
-    }
+    return hit;
   }
 
   printMap() {
-    // clearConsole();
     let numbers = [];
     for (let index = 1; index <= this.size; index++) {
       numbers.push(index % 10);
@@ -247,9 +235,11 @@ class Ship {
   wasHit(x, y) {
     if (this.isDamaged(x, y) >= 0) {
       return {
+        id: this.id,
         name: this.name,
         player: this.player,
-        hp: this.hp
+        hp: this.hp,
+        coords: { x: x, y: y }
       };
     }
     return false;

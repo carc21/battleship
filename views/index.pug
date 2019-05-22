@@ -1,8 +1,9 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to the game of #{title}
+  div.header
+    h1= title
+    p Welcome to the game of #{title}
   div.ships(style="width:"+(size * 20)+"px;height:"+(size * 20)+"px;")
   div.controls
     a.button#reset Reset
@@ -12,3 +13,4 @@ block content
   div.settings
     input.input#name(type="text")
     a.button#nameButton Set Name
+  div#log

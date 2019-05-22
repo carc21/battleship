@@ -6,6 +6,8 @@ var logger = require("morgan");
 
 var app = express();
 app.io = require("socket.io")();
+
+// routes
 var indexRouter = require("./routes/index")(app.io);
 
 // view engine setup
